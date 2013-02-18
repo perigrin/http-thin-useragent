@@ -18,8 +18,14 @@ use warnings;
     );
 
     has request => ( is => 'ro' );
+    has decoder => ( is => 'rw' );
 
-    sub as_raw {
+    sub decode {
+        my $self = shift;
+        return $self->decoder->($self->response);
+    }
+    
+    sub response {
         my $self   = shift;
         my $ua     = $self->ua;
         my $request = $self->request;
@@ -33,10 +39,10 @@ use warnings;
         if ( my $data = shift ) {
             $request->content( JSON::Any->encode($data) );
         }
-        my $res = $self->as_raw;
-        return JSON::Any->decode( $res->content ) if $res->is_success;
-        return;
+        $self->decoder( sub { JSON::Any->decode(shift->content) } );
+        return $self;
     }
+
 }
 
 use parent qw(Exporter);
@@ -59,7 +65,7 @@ __END__
 
     use HTTP::Thin::UserAgent;
 
-    my $data = http(GET http://api.metacpan.org/v0/author/PERIGRIN?join=favorite)->as_json;
+    my $data = http(GET http://api.metacpan.org/v0/author/PERIGRIN?join=favorite)->as_json->decode;
 
 =head1 DESCRIPTION
 

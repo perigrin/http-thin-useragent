@@ -9,7 +9,11 @@ use Test::Requires::Env qw(
 
 {
     my $uri = 'http://api.metacpan.org/v0/author/PERIGRIN/';
-    ok defined http( GET $uri)->as_json, 'got data';
+    my $resp = http( GET $uri )->as_json->response;
+    ok $resp->is_success, 'request was successful';
+
+    my $data = http( GET $uri )->as_json->decode;
+    ok defined $data, 'got data';
 }
 
 {
@@ -29,7 +33,7 @@ use Test::Requires::Env qw(
                 ]
             }
         }
-    );
+    )->decode;
 }
 
 done_testing;
