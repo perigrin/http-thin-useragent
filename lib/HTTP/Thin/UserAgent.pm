@@ -69,6 +69,8 @@ __END__
 
 =head1 DESCRIPTION
 
+WARNING this code is still *alpha* quality. While it will work as advertised on the tin, API breakage will likely be common until things settle down a bit. 
+
 C<HTTP::Thin::UserAgent> provides what I hope is a thin layer over L<HTTP::Thin>. It exposes an functional API that hopefully makes writing HTTP clients easier. Right now it's in *very* alpha stage and really only helps for writing JSON clients. The intent is to expand it to be more generally useful but a JSON client was what I needed first.
 
 =head1 EXPORTS
