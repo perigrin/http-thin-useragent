@@ -65,5 +65,20 @@ __END__
 
 =head1 DESCRIPTION
 
-C<HTTP::Thin::UserAgent> provides what I hope is a thin layer over L<HTTP::Thin>. It exposes an functional API that hopefully makes writing HTTP clients easier. 
+C<HTTP::Thin::UserAgent> provides what I hope is a thin layer over L<HTTP::Thin>. It exposes an functional API that hopefully makes writing HTTP clients easier. Right now it's in *very* alpha stage and really only helps for writing JSON clients. The intent is to expand it to be more generally useful but a JSON client was what I needed first.
+
+=head1 EXPORTS
+
+=over 4
+
+=item http
+
+A function that returns a new C<HTTP::Thin::UserAgent::Client> object, which does the actual work for the request. You pas in an L<HTTP::Request> object.
+
+=item GET / PUT / POST 
+
+Exports from L<HTTP::Request::Common> to make generating L<HTTP::Request> objects easier.
+
+=back
+
 
