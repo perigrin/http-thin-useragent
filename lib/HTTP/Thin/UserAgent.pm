@@ -55,8 +55,6 @@ sub http { HTTP::Thin::UserAgent::Client->new( request => shift ) }
 1;
 __END__
 
-=head1 NAME - HTTP::Thin::UserAgent
-
 =head1 SYNOPSIS
 
     use HTTP::Thin::UserAgent;
