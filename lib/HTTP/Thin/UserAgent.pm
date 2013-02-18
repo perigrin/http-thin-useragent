@@ -61,8 +61,7 @@ __END__
 
     use HTTP::Thin::UserAgent;
 
-    my $res = http(GET http://api.metacpan.org/v0/author/PERIGRIN?join=favorite)->as_json;
-    my $data = JSON::Any->decode($res->content);
+    my $data = http(GET http://api.metacpan.org/v0/author/PERIGRIN?join=favorite)->as_json;
 
 =head1 DESCRIPTION
 
