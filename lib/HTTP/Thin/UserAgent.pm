@@ -22,24 +22,27 @@ use warnings;
 
     sub decode {
         my $self = shift;
-        return $self->decoder->($self->response);
+        return $self->decoder->( $self->response );
     }
-    
+
     sub response {
-        my $self   = shift;
-        my $ua     = $self->ua;
+        my $self    = shift;
+        my $ua      = $self->ua;
         my $request = $self->request;
         return $ua->request($request);
     }
 
     sub as_json {
-        my $self = shift;
+        my $self    = shift;
         my $request = $self->request;
-        $request->header( 'Accept' => 'application/json' );
+        $request->header(
+            'Accept'       => 'application/json',
+            'Content-Type' => 'application/json',
+        );
         if ( my $data = shift ) {
             $request->content( JSON::Any->encode($data) );
         }
-        $self->decoder( sub { JSON::Any->decode(shift->content) } );
+        $self->decoder( sub { JSON::Any->decode( shift->content ) } );
         return $self;
     }
 
