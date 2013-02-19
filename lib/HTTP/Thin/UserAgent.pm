@@ -12,13 +12,18 @@ use warnings;
     use HTTP::Thin;
     use JSON::Any;
 
+    use Throwable::Factory
+        UnexpectedResponse => [qw($response)],
+        ;
+
     has ua => (
         is      => 'ro',
         default => sub { HTTP::Thin->new() },
     );
 
-    has request => ( is => 'ro' );
-    has decoder => ( is => 'rw' );
+    has request  => ( is => 'ro' );
+    has on_error => ( is => 'rw', default => sub { sub { die $_->message } } );
+    has decoder  => ( is => 'rw' );
 
     sub decoded_content {
         my $self = shift;
@@ -35,14 +40,34 @@ use warnings;
     sub as_json {
         my $self    = shift;
         my $request = $self->request;
+
         $request->header(
             'Accept'       => 'application/json',
             'Content-Type' => 'application/json',
         );
+
         if ( my $data = shift ) {
             $request->content( JSON::Any->encode($data) );
         }
-        $self->decoder( sub { JSON::Any->decode( shift->content ) } );
+
+        $self->decoder(
+            sub {
+                my $res = shift;
+                my $content_type = $res->header('Content-Type');
+                unless ( $content_type =~ m'application/json' )
+                {
+                    my $error = UnexpectedResponse->new(
+                        message  => "Content-Type was $content_type not application/json",
+                        response => $res,
+                    );
+                    for ($error) {
+                        $self->on_error->($error);
+                    }
+                }
+                JSON::Any->decode( $res->decoded_content );
+            }
+        );
+
         return $self;
     }
 
