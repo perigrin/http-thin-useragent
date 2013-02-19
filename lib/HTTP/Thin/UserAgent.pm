@@ -20,7 +20,7 @@ use warnings;
     has request => ( is => 'ro' );
     has decoder => ( is => 'rw' );
 
-    sub decode {
+    sub decoded_content {
         my $self = shift;
         return $self->decoder->( $self->response );
     }

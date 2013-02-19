@@ -12,7 +12,7 @@ use Test::Requires::Env qw(
     my $resp = http( GET $uri )->as_json->response;
     ok $resp->is_success, 'request was successful';
 
-    my $data = http( GET $uri )->as_json->decode;
+    my $data = http( GET $uri )->as_json->decoded_content;
     ok defined $data, 'got data';
 }
 
@@ -33,7 +33,7 @@ use Test::Requires::Env qw(
                 ]
             }
         }
-    )->decode;
+    )->decoded_content;
 }
 
 done_testing;
