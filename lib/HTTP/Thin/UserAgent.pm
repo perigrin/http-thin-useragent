@@ -35,6 +35,8 @@ use warnings;
         return $self->decoder->( $self->response );
     }
 
+    sub decoded_content { shift->decode }
+
     has response => (
         is      => 'ro',
         lazy    => 1,
