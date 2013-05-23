@@ -21,5 +21,5 @@ HTTP::Thin::UserAgent --  A Thin Wrapper around HTTP::Thin
                 ]
             }
         }
-    );
+    )->decode;
 
