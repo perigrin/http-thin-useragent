@@ -13,24 +13,36 @@ use warnings;
     use JSON::Any;
 
     use Throwable::Factory
-        UnexpectedResponse => [qw($response)],
-        ;
+      UnexpectedResponse => [qw($response)],
+      ;
 
     has ua => (
         is      => 'ro',
         default => sub { HTTP::Thin->new() },
     );
 
-    has request  => ( is => 'ro' );
-    has on_error => ( is => 'rw', default => sub { sub { die $_->message } } );
-    has decoder  => ( is => 'rw' );
+    has request => ( is => 'ro' );
+    has on_error => (
+        is      => 'rw',
+        default => sub {
+            sub { die $_->message }
+        }
+    );
+    has decoder => ( is => 'rw' );
 
-    sub decoded_content {
+    sub decode {
         my $self = shift;
         return $self->decoder->( $self->response );
     }
 
-    sub response {
+    has response => (
+        is      => 'ro',
+        lazy    => 1,
+        builder => '_build_response',
+        handles => ['content'],
+    );
+
+    sub _build_response {
         my $self    = shift;
         my $ua      = $self->ua;
         my $request = $self->request;
@@ -52,24 +64,26 @@ use warnings;
 
         $self->decoder(
             sub {
-                my $res = shift;
+                my $res          = shift;
                 my $content_type = $res->header('Content-Type');
-                unless ( $content_type =~ m'application/json' )
-                {
+                unless ( $content_type =~ m'application/json' ) {
                     my $error = UnexpectedResponse->new(
-                        message  => "Content-Type was $content_type not application/json",
+                        message =>
+                          "Content-Type was $content_type not application/json",
                         response => $res,
                     );
                     for ($error) {
                         $self->on_error->($error);
                     }
                 }
-                JSON::Any->decode( $res->decoded_content );
+                JSON::Any->decode( $res->content );
             }
         );
 
         return $self;
     }
+
+    sub dump { require Data::Dumper; return Data::Dumper::Dumper(shift) }
 
 }
 
