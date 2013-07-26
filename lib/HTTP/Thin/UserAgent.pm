@@ -119,7 +119,16 @@ __END__
 
     use HTTP::Thin::UserAgent;
 
-    my $data = http(GET http://api.metacpan.org/v0/author/PERIGRIN?join=favorite)->as_json->decode;
+    my $favorites = http(GET 'http://api.metacpan.org/v0/author/PERIGRIN?join=favorite')->as_json->decode;
+
+    my $results = http(GET 'http://www.imdb.com/find?q=Kevin+Bacon')->scrape(
+        scraper {
+            process '.findResult', 'results[]' => scraper {
+                process '.result_text', text => 'TEXT';
+                process '.result_text > a', link => '@href';
+            }
+        }
+    );
 
 =head1 DESCRIPTION
 
@@ -139,6 +148,35 @@ A function that returns a new C<HTTP::Thin::UserAgent::Client> object, which doe
 
 Exports from L<HTTP::Request::Common> to make generating L<HTTP::Request> objects easier.
 
+=item scraper / process
+
+Exports from L<Web::Scraper> to assist in building scrapers for HTML documents.
+
 =back
 
+=head1 Methods
+
+C<HTTP::Thin::UserAgent::Client> has the following methods.
+
+=over 4
+
+=item response
+
+Returns the L<HTTP::Response> object returned by L<HTTP::Thin>
+
+=item as_json($data)
+
+This sets the request up to use C<application/json> and then adds a decoder to decode the L<HTTP::Response> content. If data is passed in it will be encoded into JSON and supplied in as the request data.
+
+=item decode()
+
+Returns the decoded content. Currently we only support JSON encodeing but eventually we hope to support other contents as well.
+
+=item scrape($scraper)
+
+Passes the L<HTTP::Response> content through the L<Web::Scraper> object supplied. It will return the data (if any) returned by the scraper object.
+
+=item on_error($coderef)
+
+A code reference that if there is an error in fetching the HTTP response handles that error.
 
