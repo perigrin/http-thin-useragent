@@ -22,12 +22,14 @@ use warnings;
     );
 
     has request => ( is => 'ro' );
+
     has on_error => (
         is      => 'rw',
         default => sub {
             sub { die $_->message }
         }
     );
+
     has decoder => ( is => 'rw' );
 
     sub decode {
@@ -87,17 +89,25 @@ use warnings;
 
     sub dump { require Data::Dumper; return Data::Dumper::Dumper(shift) }
 
+    sub scrape {
+        my ( $self, $scraper ) = @_;
+        my $res = $self->response;
+        return $scraper->scrape($self->content);
+    }
+
 }
 
 use parent qw(Exporter);
 use Import::Into;
 use HTTP::Request::Common;
+use Web::Scraper;
 
 our @EXPORT = qw(http);
 
 sub import {
     shift->export_to_level(1);
     HTTP::Request::Common->import::into( scalar caller );
+    Web::Scraper->import::into( scalar caller );
 }
 
 sub http { HTTP::Thin::UserAgent::Client->new( request => shift ) }
