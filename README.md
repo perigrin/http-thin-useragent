@@ -3,10 +3,9 @@ HTTP::Thin::UserAgent
 
 HTTP::Thin::UserAgent --  A Thin Wrapper around HTTP::Thin
 
-
     use HTTP::Thin::UserAgent;
-    my $uri = 'http://api.metacpan.org/v0/release/_search';
-    my $data = http( POST $uri)->as_json(
+
+    my $data = http( POST 'http://api.metacpan.org/v0/release/_search')->as_json(
         {   query  => { match_all => {} },
             size   => 5000,
             fields => ['distribution'],
@@ -22,4 +21,14 @@ HTTP::Thin::UserAgent --  A Thin Wrapper around HTTP::Thin
             }
         }
     )->decode;
+
+    my $results = http(GET 'http://www.imdb.com/find?q=Kevin+Bacon')->scraper(
+        scraper {
+            process '.findResult', 'results[]' => scraper {
+                process '.result_text', text => 'TEXT';
+                process '.result_text > a', link => '@href';
+            }
+        }
+    )->decode;
+
 
