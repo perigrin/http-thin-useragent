@@ -94,17 +94,39 @@ use warnings;
         my ( $self, $scraper ) = @_;
         my $res = $self->response;
         $self->decoder(
-            sub { 
-                my $res = shift; 
-                my $data = try { $scraper->scrape($res->content) }
-                catch { 
-                    my $error = UnexpectedResponse->new( message => $_, response => $res);
+            sub {
+                my $res = shift;
+                my $data = try { $scraper->scrape( $res->content ) }
+                catch {
+                    my $error = UnexpectedResponse->new(
+                        message  => $_,
+                        response => $res
+                    );
                     for ($error) { $self->on_error->($error); }
                 };
                 return $data;
             }
         );
         return $self;
+    }
+
+    sub tree { 
+        my ($self) = @_;
+        my $t = HTML::TreeBuilder::XPath->new;
+        $t->store_comments(1) if ( $t->can('store_comments') );
+        $t->ignore_unknown(0);
+        $t->parse( $self->content );
+        return $t;
+    }
+
+    sub find {
+        my ( $self, $exp ) = @_;
+        my $xpath = $exp =~ m!^(?:/|id\()! ? $exp : HTML::Selector::XPath::selector_to_xpath($exp);
+        my @nodes = try { $self->tree->findnodes($xpath) } catch { 
+            for ($_) { $self->on_error($_) }
+        };
+        return unless @nodes;
+        return \@nodes;
     }
 
 }
@@ -187,6 +209,14 @@ Sets up the request to process the response through the L<Web::Scraper> object s
 =item decode()
 
 Returns the decoded content, currently we only support HTML (in which case we return scraped content) and JSON (in which case we decode the JSON using JSON::Any).
+
+=item tree()
+
+Returns a L<HTML::Treebuilder::XPath> object. 
+
+=item find($exp) 
+
+Takes a CSS or XPath expression and returns an arrayref of L<HTML::Treebuilder::XPath> nodes.
 
 =item on_error($coderef)
 
