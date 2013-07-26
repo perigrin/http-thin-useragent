@@ -39,14 +39,14 @@ use Test::Requires::Env qw(
 }
 {
     my $uri = 'http://www.imdb.com/find?q=Kevin+Bacon';
-    ok my $data = http( GET $uri )->scrape(
+    ok my $data = http( GET $uri )->scraper(
         scraper {
             process '.findResult', 'results[]' => scraper {
                 process '.result_text',       text => 'TEXT';
                 process '.result_text > a',  link => '@href';
             };
         }
-    ), 'scraped IMDB';
+    )->decode, 'scraped IMDB';
     ok grep( { $_->{text} eq 'Kevin Bacon (I) (Actor, Mystic River (2003))' } @{$data->{results}} ), 'found Kevin Bacon';
 }
 done_testing;
