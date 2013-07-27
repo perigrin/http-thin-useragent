@@ -44,7 +44,7 @@ use warnings;
         is      => 'ro',
         lazy    => 1,
         builder => '_build_response',
-        handles => ['content'],
+        handles => { 'content' => 'decoded_content' },
     );
 
     sub _build_response {
@@ -110,7 +110,7 @@ use warnings;
         return $self;
     }
 
-    sub tree { 
+    sub tree {
         my ($self) = @_;
         my $t = HTML::TreeBuilder::XPath->new;
         $t->store_comments(1) if ( $t->can('store_comments') );
@@ -121,8 +121,14 @@ use warnings;
 
     sub find {
         my ( $self, $exp ) = @_;
-        my $xpath = $exp =~ m!^(?:/|id\()! ? $exp : HTML::Selector::XPath::selector_to_xpath($exp);
-        my @nodes = try { $self->tree->findnodes($xpath) } catch { 
+
+        my $xpath =
+            $exp =~ m!^(?:/|id\()!
+          ? $exp
+          : HTML::Selector::XPath::selector_to_xpath($exp);
+
+        my @nodes = try { $self->tree->findnodes($xpath) }
+        catch {
             for ($_) { $self->on_error($_) }
         };
         return unless @nodes;
