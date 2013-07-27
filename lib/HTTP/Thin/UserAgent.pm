@@ -194,31 +194,32 @@ C<HTTP::Thin::UserAgent::Client> has the following methods.
 
 =over 4
 
-=item response
+=item response( )
 
 Returns the L<HTTP::Response> object returned by L<HTTP::Thin>
 
-=item as_json($data)
+=item as_json( $data )
 
 This sets the request up to use C<application/json> and then adds a decoder to decode the L<HTTP::Response> content. If data is passed in it will be encoded into JSON and supplied in as the request data.
 
-=item scraper($scraper)
+=item scraper( $scraper )
 
 Sets up the request to process the response through the L<Web::Scraper> object supplied. It will return the data (if any) returned by the scraper object.
 
-=item decode()
+=item decode( )
 
 Returns the decoded content, currently we only support HTML (in which case we return scraped content) and JSON (in which case we decode the JSON using JSON::Any).
 
-=item tree()
+=item tree( )
 
 Returns a L<HTML::Treebuilder::XPath> object. 
 
-=item find($exp) 
+=item find( $exp ) 
 
 Takes a CSS or XPath expression and returns an arrayref of L<HTML::Treebuilder::XPath> nodes.
 
-=item on_error($coderef)
+=item on_error( $coderef )
 
 A code reference that if there is an error in fetching the HTTP response handles that error. C<$_> will be set to the error being handled.
 
+=back
