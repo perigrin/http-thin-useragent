@@ -1,133 +1,106 @@
 package HTTP::Thin::UserAgent;
-use 5.12.1;
+use 5.16.1;
 use warnings;
 
 # ABSTRACT: A Thin UserAgent around some useful modules.
 
-{
+use mop;
 
-    package HTTP::Thin::UserAgent::Client;
-    use Moo;
-    use MooX::late;
-    use HTTP::Thin;
-    use JSON::Any;
-    use Try::Tiny;
+use HTTP::Thin;
+use JSON::Any;
+use Try::Tiny;
+use Throwable::Factory
+  UnexpectedResponse => [qw($response)],
+  ;
 
-    use Throwable::Factory
-      UnexpectedResponse => [qw($response)],
-      ;
+class Client {
 
-    has ua => (
-        is      => 'ro',
-        default => sub { HTTP::Thin->new() },
-    );
+    has $ua = do { HTTP::Thin->new };
 
-    has request => ( is => 'ro' );
+    has $request is ro;
 
-    has on_error => (
-        is      => 'rw',
-        default => sub {
-            sub { die $_->message }
-        }
-    );
+    has $on_error is rw = do { sub { die $_->message } };
 
-    has decoder => ( is => 'rw' );
+    has $decoder is rw;
 
-    sub decode {
-        my $self = shift;
-        return $self->decoder->( $self->response );
-    }
+    # has $response is ro, lazy = sub { ${^SELF}->_response };
+    has $response is ro, lazy(sub { ${^SELF}->_response });
 
-    sub decoded_content { shift->decode }
+    method _response { $ua->request($request); }
 
-    has response => (
-        is      => 'ro',
-        lazy    => 1,
-        builder => '_build_response',
-        handles => { 'content' => 'decoded_content' },
-    );
+    # has $tree is ro, lazy = sub { ${^SELF}->_tree };
+    has $tree is ro, lazy(sub { ${^SELF}->_tree });
 
-    sub _build_response {
-        my $self    = shift;
-        my $ua      = $self->ua;
-        my $request = $self->request;
-        return $ua->request($request);
-    }
-
-    sub as_json {
-        my $self    = shift;
-        my $request = $self->request;
-
-        $request->header(
-            'Accept'       => 'application/json',
-            'Content-Type' => 'application/json',
-        );
-
-        if ( my $data = shift ) {
-            $request->content( JSON::Any->encode($data) );
-        }
-
-        $self->decoder(
-            sub {
-                my $res          = shift;
-                my $content_type = $res->header('Content-Type');
-                unless ( $content_type =~ m'application/json' ) {
-                    my $error = UnexpectedResponse->new(
-                        message =>
-                          "Content-Type was $content_type not application/json",
-                        response => $res,
-                    );
-                    for ($error) {
-                        $self->on_error->($error);
-                    }
-                }
-                JSON::Any->decode( $res->content );
-            }
-        );
-
-        return $self;
-    }
-
-    sub dump { require Data::Dumper; return Data::Dumper::Dumper(shift) }
-
-    sub scraper {
-        my ( $self, $scraper ) = @_;
-        my $res = $self->response;
-        $self->decoder(
-            sub {
-                my $res = shift;
-                my $data = try { $scraper->scrape( $res->content ) }
-                catch {
-                    my $error = UnexpectedResponse->new(
-                        message  => $_,
-                        response => $res
-                    );
-                    for ($error) { $self->on_error->($error); }
-                };
-                return $data;
-            }
-        );
-        return $self;
-    }
-
-    sub tree {
-        my ($self) = @_;
+    method _tree {
         my $t = HTML::TreeBuilder::XPath->new;
         $t->store_comments(1) if ( $t->can('store_comments') );
         $t->ignore_unknown(0);
         $t->parse( $self->content );
         return $t;
+    };
+
+    method decode { $decoder->($self->response) }
+    method decoded_content { $self->decode }
+    method handles { $response->decoded_content }
+
+    method as_json($data) {
+        $request->header(
+            'Accept'       => 'application/json',
+            'Content-Type' => 'application/json',
+        );
+
+        if (defined $data) {
+            $request->content( JSON::Any->encode($data) );
+        }
+
+        $decoder = sub {
+            my $res          = shift;
+            my $content_type = $res->header('Content-Type');
+            unless ( $content_type =~ m'application/json' ) {
+                my $error = UnexpectedResponse->new(
+                    message =>
+                      "Content-Type was $content_type not application/json",
+                    response => $res,
+                );
+                for ($error) {
+                    $self->on_error->($error);
+                }
+            }
+            JSON::Any->decode( $res->content );
+        };
+
+        return $self;
     }
 
-    sub find {
-        my ( $self, $exp ) = @_;
+    method dump {
+        require Data::Dumper;
+          return Data::Dumper::Dumper($self)
+    }
 
-        my $xpath =
-            $exp =~ m!^(?:/|id\()!
+    method scraper($scraper) {
+        $decoder = sub {
+            my $res = shift;
+            my $data = try { $scraper->scrape( $res->content ) }
+            catch {
+                my $error = UnexpectedResponse->new(
+                    message  => $_,
+                    response => $res
+                );
+                for ($error) { $self->on_error->($error); }
+            };
+            return $data;
+        };
+        return $self;
+    }
+
+    
+    method find($exp) {
+
+        my $xpath = $exp =~ m!^(?:/|id\()!
           ? $exp
           : HTML::Selector::XPath::selector_to_xpath($exp);
 
-        my @nodes = try { $self->tree->findnodes($xpath) }
+        my @nodes = try { $tree->findnodes($xpath) }
         catch {
             for ($_) { $self->on_error($_) }
         };
