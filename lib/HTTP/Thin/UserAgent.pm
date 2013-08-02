@@ -19,17 +19,15 @@ class Client {
 
     has $request is ro;
 
-    has $on_error is rw = do { sub { die $_->message } };
+    has $on_error is rw = sub { die $_->message };
 
     has $decoder is rw;
 
-    # has $response is ro, lazy = sub { ${^SELF}->_response };
-    has $response is ro, lazy(sub { ${^SELF}->_response });
+    has $response is ro, lazy = ${^SELF}->_response;
 
     method _response { $ua->request($request); }
 
-    # has $tree is ro, lazy = sub { ${^SELF}->_tree };
-    has $tree is ro, lazy(sub { ${^SELF}->_tree });
+    has $tree is ro, lazy = ${^SELF}->_tree;
 
     method _tree {
         my $t = HTML::TreeBuilder::XPath->new;
