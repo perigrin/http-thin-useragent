@@ -23,11 +23,11 @@ class Client {
 
     has $decoder is rw;
 
-    has $response is ro, lazy = ${^SELF}->_response;
+    has $response is ro, lazy = $_->_response;
 
     method _response { $ua->request($request); }
 
-    has $tree is ro, lazy = ${^SELF}->_tree;
+    has $tree is ro, lazy = $_->_tree;
 
     method _tree {
         my $t = HTML::TreeBuilder::XPath->new;
