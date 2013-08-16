@@ -15,3 +15,4 @@ requires 'Test::More';
 requires 'Test::Requires::Env';
 requires 'Throwable::Factory';
 requires 'warnings';
+requires 'Web::Scraper';
