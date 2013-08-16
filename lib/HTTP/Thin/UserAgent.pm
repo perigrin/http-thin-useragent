@@ -81,7 +81,7 @@ use warnings;
                         $self->on_error->($error);
                     }
                 }
-                JSON::Any->decode( $res->content );
+                JSON::Any->decode( $res->decoded_content );
             }
         );
 
@@ -92,11 +92,11 @@ use warnings;
 
     sub scraper {
         my ( $self, $scraper ) = @_;
-        my $res = $self->response;
+
         $self->decoder(
             sub {
                 my $res = shift;
-                my $data = try { $scraper->scrape( $res->content ) }
+                my $data = try { $scraper->scrape( $res->decoded_content ) }
                 catch {
                     my $error = UnexpectedResponse->new(
                         message  => $_,
