@@ -15,19 +15,19 @@ use Throwable::Factory
 
 class Client {
 
-    has $ua = do { HTTP::Thin->new };
+    has $!ua = do { HTTP::Thin->new };
 
-    has $request is ro;
+    has $!request is ro;
 
-    has $on_error is rw = sub { die $_->message };
+    has $!on_error is rw = sub { die $_->message };
 
-    has $decoder is rw;
+    has $!decoder is rw;
 
-    has $response is ro, lazy = $_->_response;
+    has $!response is ro, lazy = $_->_response;
 
-    method _response { $ua->request($request); }
+    method _response { $!ua->request($!request); }
 
-    has $tree is ro, lazy = $_->_tree;
+    has $!tree is ro, lazy = $_->_tree;
 
     method _tree {
         my $t = HTML::TreeBuilder::XPath->new;
@@ -37,21 +37,21 @@ class Client {
         return $t;
     };
 
-    method decode { $decoder->($self->response) }
+    method decode { $!decoder->($self->response) }
     method decoded_content { $self->decode }
-    method handles { $response->decoded_content }
+    method handles { $!response->decoded_content }
 
     method as_json($data) {
-        $request->header(
+        $!request->header(
             'Accept'       => 'application/json',
             'Content-Type' => 'application/json',
         );
 
         if (defined $data) {
-            $request->content( JSON::Any->encode($data) );
+            $!request->content( JSON::Any->encode($data) );
         }
 
-        $decoder = sub {
+        $!decoder = sub {
             my $res          = shift;
             my $content_type = $res->header('Content-Type');
             unless ( $content_type =~ m'application/json' ) {
@@ -76,7 +76,7 @@ class Client {
     }
 
     method scraper($scraper) {
-        $decoder = sub {
+        $!decoder = sub {
             my $res = shift;
             my $data = try { $scraper->scrape( $res->content ) }
             catch {
@@ -91,14 +91,14 @@ class Client {
         return $self;
     }
 
-    
+
     method find($exp) {
 
         my $xpath = $exp =~ m!^(?:/|id\()!
           ? $exp
           : HTML::Selector::XPath::selector_to_xpath($exp);
 
-        my @nodes = try { $tree->findnodes($xpath) }
+        my @nodes = try { $!tree->findnodes($xpath) }
         catch {
             for ($_) { $self->on_error($_) }
         };
@@ -143,7 +143,7 @@ __END__
 
 =head1 DESCRIPTION
 
-WARNING this code is still *alpha* quality. While it will work as advertised on the tin, API breakage will likely be common until things settle down a bit. 
+WARNING this code is still *alpha* quality. While it will work as advertised on the tin, API breakage will likely be common until things settle down a bit.
 
 C<HTTP::Thin::UserAgent> provides what I hope is a thin layer over L<HTTP::Thin>. It exposes an functional API that hopefully makes writing HTTP clients easier. Right now it's in *very* alpha stage and really only helps for writing JSON clients. The intent is to expand it to be more generally useful but a JSON client was what I needed first.
 
@@ -155,7 +155,7 @@ C<HTTP::Thin::UserAgent> provides what I hope is a thin layer over L<HTTP::Thin>
 
 A function that returns a new C<HTTP::Thin::UserAgent::Client> object, which does the actual work for the request. You pas in an L<HTTP::Request> object.
 
-=item GET / PUT / POST 
+=item GET / PUT / POST
 
 Exports from L<HTTP::Request::Common> to make generating L<HTTP::Request> objects easier.
 
@@ -189,9 +189,9 @@ Returns the decoded content, currently we only support HTML (in which case we re
 
 =item tree( )
 
-Returns a L<HTML::Treebuilder::XPath> object. 
+Returns a L<HTML::Treebuilder::XPath> object.
 
-=item find( $exp ) 
+=item find( $exp )
 
 Takes a CSS or XPath expression and returns an arrayref of L<HTML::Treebuilder::XPath> nodes.
 
