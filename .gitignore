@@ -19,3 +19,4 @@ perl5/
 HTTP-Thin-UserAgent-*
 local/
 cpanfile.snapshot
+Changes
