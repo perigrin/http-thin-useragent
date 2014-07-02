@@ -1,4 +1,5 @@
 package HTTP::Thin::UserAgent;
+
 use 5.12.1;
 use warnings;
 
@@ -6,7 +7,9 @@ use warnings;
 
 {
 
-    package HTTP::Thin::UserAgent::Client;
+    package 
+        HTTP::Thin::UserAgent::Client;
+
     use Moo;
     use MooX::late;
     use HTTP::Thin;
