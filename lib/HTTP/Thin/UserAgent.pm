@@ -12,6 +12,8 @@ use warnings;
     use HTTP::Thin;
     use JSON::Any;
     use Try::Tiny;
+    
+    use constant TRACE => $ENV{TRACE} // 0;
 
     use Throwable::Factory
       UnexpectedResponse => [qw($response)],
@@ -51,7 +53,13 @@ use warnings;
         my $self    = shift;
         my $ua      = $self->ua;
         my $request = $self->request;
-        return $ua->request($request);
+
+        return $ua->request($request) unless TRACE;
+            
+        warn $request->dump;
+        my $response = $ua->request($request);
+        warn $response->dump;
+        return $response;
     }
 
     sub as_json {
@@ -172,7 +180,7 @@ __END__
 
 =head1 DESCRIPTION
 
-WARNING this code is still *alpha* quality. While it will work as advertised on the tin, API breakage will likely be common until things settle down a bit. 
+WARNING this code is still *alpha* quality. While it will work as advertised on the tin, API breakage may occure as things settle.
 
 C<HTTP::Thin::UserAgent> provides what I hope is a thin layer over L<HTTP::Thin>. It exposes an functional API that hopefully makes writing HTTP clients easier. Right now it's in *very* alpha stage and really only helps for writing JSON clients. The intent is to expand it to be more generally useful but a JSON client was what I needed first.
 
@@ -194,7 +202,7 @@ Exports from L<Web::Scraper> to assist in building scrapers for HTML documents.
 
 =back
 
-=head1 Methods
+=head1 METHODS
 
 C<HTTP::Thin::UserAgent::Client> has the following methods.
 
@@ -227,5 +235,15 @@ Takes a CSS or XPath expression and returns an arrayref of L<HTML::Treebuilder::
 =item on_error( $coderef )
 
 A code reference that if there is an error in fetching the HTTP response handles that error. C<$_> will be set to the error being handled.
+
+=back
+
+=head1 ENVIRONMENT
+
+=over 4
+
+=item TRACE
+
+When set to true the C<TRACE> variable will cause C<HTTP::Thin::UserAgent::Client> to emit dumps of the request and response objects as it processes them. This is to help you in debugging the HTTP requests.
 
 =back
