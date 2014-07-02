@@ -47,6 +47,6 @@ use Test::Requires::Env qw(
             };
         }
     )->decode, 'scraped IMDB';
-    ok grep( { $_->{text} eq 'Kevin Bacon (I) (Actor, Mystic River (2003))' } @{$data->{results}} ), 'found Kevin Bacon';
+    ok grep( { $_->{text} =~ /^\QKevin Bacon (I) (Actor,\E/ } @{$data->{results}} ), 'found Kevin Bacon';
 }
 done_testing;
