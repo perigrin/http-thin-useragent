@@ -7,7 +7,7 @@ use warnings;
 
 {
 
-    package 
+    package
         HTTP::Thin::UserAgent::Client;
 
     use Moo;
@@ -15,7 +15,8 @@ use warnings;
     use HTTP::Thin;
     use JSON::Any;
     use Try::Tiny;
-    
+    use Scalar::Util qw/weaken/;
+
     use constant TRACE => $ENV{TRACE} // 0;
 
     use Throwable::Factory
@@ -58,7 +59,7 @@ use warnings;
         my $request = $self->request;
 
         return $ua->request($request) unless TRACE;
-            
+
         warn $request->dump;
         my $response = $ua->request($request);
         warn $response->dump;
@@ -66,7 +67,8 @@ use warnings;
     }
 
     sub as_json {
-        my $self    = shift;
+        weaken(my $self = shift);
+
         my $request = $self->request;
 
         $request->header(
@@ -103,6 +105,7 @@ use warnings;
 
     sub scraper {
         my ( $self, $scraper ) = @_;
+        weaken($self);
 
         $self->decoder(
             sub {
@@ -195,7 +198,7 @@ C<HTTP::Thin::UserAgent> provides what I hope is a thin layer over L<HTTP::Thin>
 
 A function that returns a new C<HTTP::Thin::UserAgent::Client> object, which does the actual work for the request. You pas in an L<HTTP::Request> object.
 
-=item GET / PUT / POST 
+=item GET / PUT / POST
 
 Exports from L<HTTP::Request::Common> to make generating L<HTTP::Request> objects easier.
 
@@ -229,9 +232,9 @@ Returns the decoded content, currently we only support HTML (in which case we re
 
 =item tree( )
 
-Returns a L<HTML::Treebuilder::XPath> object. 
+Returns a L<HTML::Treebuilder::XPath> object.
 
-=item find( $exp ) 
+=item find( $exp )
 
 Takes a CSS or XPath expression and returns an arrayref of L<HTML::Treebuilder::XPath> nodes.
 
