@@ -67,7 +67,7 @@ use warnings;
     }
 
     sub as_json {
-        weaken(my $self = shift);
+        my $self = shift;
 
         my $request = $self->request;
 
@@ -82,6 +82,7 @@ use warnings;
 
         $self->decoder(
             sub {
+                weaken($self);
                 my $res          = shift;
                 my $content_type = $res->header('Content-Type');
                 unless ( $content_type =~ m'application/json' ) {
@@ -105,10 +106,10 @@ use warnings;
 
     sub scraper {
         my ( $self, $scraper ) = @_;
-        weaken($self);
 
         $self->decoder(
             sub {
+                weaken($self);
                 my $res = shift;
                 my $data = try { $scraper->scrape( $res->decoded_content ) }
                 catch {
