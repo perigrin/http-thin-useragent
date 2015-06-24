@@ -13,7 +13,7 @@ use warnings;
     use Moo;
     use MooX::late;
     use HTTP::Thin;
-    use JSON::Any;
+    use JSON::MaybeXS;
     use Try::Tiny;
     use Scalar::Util qw/weaken/;
 
@@ -77,7 +77,7 @@ use warnings;
         );
 
         if ( my $data = shift ) {
-            $request->content( JSON::Any->encode($data) );
+            $request->content( encode_json($data) );
         }
 
         weaken($self);
@@ -95,7 +95,7 @@ use warnings;
                         $self->on_error->($error);
                     }
                 }
-                JSON::Any->decode( $res->decoded_content );
+                decode_json( $res->decoded_content );
             }
         );
 
@@ -229,7 +229,7 @@ Sets up the request to process the response through the L<Web::Scraper> object s
 
 =item decode( )
 
-Returns the decoded content, currently we only support HTML (in which case we return scraped content) and JSON (in which case we decode the JSON using JSON::Any).
+Returns the decoded content, currently we only support HTML (in which case we return scraped content) and JSON (in which case we decode the JSON using L<JSON::MaybeXS>).
 
 =item tree( )
 

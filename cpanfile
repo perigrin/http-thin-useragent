@@ -6,7 +6,7 @@ requires 'File::Temp';
 requires 'HTTP::Request::Common';
 requires 'HTTP::Thin';
 requires 'Import::Into';
-requires 'JSON::Any';
+requires 'JSON::MaybeXS';
 requires 'Moo';
 requires 'MooX::late';
 requires 'parent';
