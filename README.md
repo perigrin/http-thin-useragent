@@ -20,7 +20,7 @@ HTTP::Thin::UserAgent --  A Thin Wrapper around HTTP::Thin
                 ]
             }
         }
-    )->decode;
+    )->decoded_content;
 
     my $results = http(GET 'http://www.imdb.com/find?q=Kevin+Bacon')->scraper(
         scraper {
@@ -29,6 +29,6 @@ HTTP::Thin::UserAgent --  A Thin Wrapper around HTTP::Thin
                 process '.result_text > a', link => '@href';
             }
         }
-    )->decode;
+    )->decoded_content;
 
 
