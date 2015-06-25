@@ -50,12 +50,12 @@ use warnings;
         chained => 1,
     );
 
-    sub decode {
+    sub decoded_content {
         my $self = shift;
         return $self->decoder->( $self->response );
     }
 
-    sub decoded_content { shift->decode }
+    sub decode { warn 'decode is deprecated, please call decoded_content instead'; shift->decoded_content }
 
     has response => (
         is      => 'ro',
@@ -184,7 +184,7 @@ __END__
 
     use HTTP::Thin::UserAgent;
 
-    my $favorites = http(GET 'http://api.metacpan.org/v0/author/PERIGRIN?join=favorite')->as_json->decode;
+    my $favorites = http(GET 'http://api.metacpan.org/v0/author/PERIGRIN?join=favorite')->as_json->decoded_content;
 
     my $results = http(GET 'http://www.imdb.com/find?q=Kevin+Bacon')->scraper(
         scraper {
@@ -237,7 +237,7 @@ This sets the request up to use C<application/json> and then adds a decoder to d
 
 Sets up the request to process the response through the L<Web::Scraper> object supplied. It will return the data (if any) returned by the scraper object.
 
-=item decode( )
+=item decoded_content( )
 
 Returns the decoded content, currently we only support HTML (in which case we return scraped content) and JSON (in which case we decode the JSON using JSON::Any).
 

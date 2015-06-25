@@ -12,7 +12,7 @@ use Test::Requires::Env qw(
     my $resp = http( GET $uri )->as_json->response;
     ok $resp->is_success, 'request was successful';
 
-    my $data = http( GET $uri )->as_json->decode;
+    my $data = http( GET $uri )->as_json->decoded_content;
     ok defined $data, 'got data';
 }
 
@@ -35,7 +35,7 @@ use Test::Requires::Env qw(
                 ]
             }
         }
-    )->decode;
+    )->decoded_content;
 }
 {
     my $uri = 'http://www.imdb.com/find?q=Kevin+Bacon';
@@ -46,7 +46,7 @@ use Test::Requires::Env qw(
                 process '.result_text > a',  link => '@href';
             };
         }
-    )->decode, 'scraped IMDB';
+    )->decoded_content, 'scraped IMDB';
     ok grep( { $_->{text} =~ /^\QKevin Bacon (I) (Actor,\E/ } @{$data->{results}} ), 'found Kevin Bacon';
 }
 done_testing;
