@@ -6,6 +6,16 @@ use warnings;
 # ABSTRACT: A Thin UserAgent around some useful modules.
 
 {
+    package
+        HTTP::Thin::UserAgent::Error::UnexpectedResponse;
+
+    use Moo;
+    extends qw(Throwable::Error);
+
+    has response => ( is => 'ro' );
+}
+
+{
 
     package
         HTTP::Thin::UserAgent::Client;
@@ -18,10 +28,7 @@ use warnings;
     use Scalar::Util qw/weaken/;
 
     use constant TRACE => $ENV{TRACE} // 0;
-
-    use Throwable::Factory
-      UnexpectedResponse => [qw($response)],
-      ;
+    use constant UnexpectedResponse => 'HTTP::Thin::UserAgent::Error::UnexpectedResponse';
 
     has ua => (
         is      => 'ro',
@@ -87,8 +94,7 @@ use warnings;
                 my $content_type = $res->header('Content-Type');
                 unless ( $content_type =~ m'application/json' ) {
                     my $error = UnexpectedResponse->new(
-                        message =>
-                          "Content-Type was $content_type not application/json",
+                        message  => "Content-Type was $content_type not application/json",
                         response => $res,
                     );
                     for ($error) {

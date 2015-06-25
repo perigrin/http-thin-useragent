@@ -13,6 +13,6 @@ requires 'parent';
 requires 'strict';
 requires 'Test::More';
 requires 'Test::Requires::Env';
-requires 'Throwable::Factory';
+requires 'Throwable';
 requires 'warnings';
 requires 'Web::Scraper';
