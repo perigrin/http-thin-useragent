@@ -22,6 +22,7 @@ use warnings;
 
     use Moo;
     use MooX::late;
+    use MooX::ChainedAttributes;
     use HTTP::Thin;
     use JSON::Any;
     use Try::Tiny;
@@ -39,12 +40,14 @@ use warnings;
 
     has on_error => (
         is      => 'rw',
-        default => sub {
-            sub { die $_->message }
-        }
+        default => sub { sub { confess $_->message } },
+        chained => 1,
     );
 
-    has decoder => ( is => 'rw' );
+    has decoder => (
+        is => 'rw',
+        chained => 1,
+    );
 
     sub decode {
         my $self = shift;
