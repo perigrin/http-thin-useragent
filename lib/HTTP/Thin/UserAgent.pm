@@ -37,7 +37,10 @@ use warnings;
         default => sub { HTTP::Thin->new() },
     );
 
-    has request => ( is => 'ro' );
+    has request => (
+        is => 'ro',
+        required => 1,
+    );
 
     has on_error => (
         is      => 'rw',
