@@ -27,6 +27,7 @@ use warnings;
     use JSON::Any;
     use Try::Tiny;
     use Scalar::Util qw/weaken/;
+    use Carp qw(confess);
 
     use constant TRACE => $ENV{TRACE} // 0;
     use constant UnexpectedResponse => 'HTTP::Thin::UserAgent::Error::UnexpectedResponse';
