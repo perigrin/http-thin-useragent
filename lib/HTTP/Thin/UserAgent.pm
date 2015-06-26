@@ -99,19 +99,22 @@ use warnings;
             sub {
                 my $res          = shift;
                 my $content_type = $res->header('Content-Type');
-                unless ( $content_type =~ m'application/json' ) {
+                my $data         = try {
+                    die "Content-Type was $content_type not application/json"
+                        unless $content_type =~ m'application/json';
+                    JSON::Any->decode( $res->decoded_content );
+                }
+                catch {
                     my $error = UnexpectedResponse->new(
-                        message  => "Content-Type was $content_type not application/json",
+                        message  => $_,
                         response => $res,
                     );
                     for ($error) {
                         $self->on_error->($error);
                     }
-                }
-                JSON::Any->decode( $res->decoded_content );
+                };
             }
         );
-
         return $self;
     }
 
