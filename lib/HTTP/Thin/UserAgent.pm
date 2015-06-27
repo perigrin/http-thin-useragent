@@ -33,6 +33,7 @@ use warnings;
     use Try::Tiny;
 
     use constant TRACE => $ENV{TRACE} // 0;
+    use constant MAX_REDIRECTS => $ENV{MAX_REDIRECTS} // 10;
     use constant UnexpectedResponse => 'HTTP::Thin::UserAgent::Error::UnexpectedResponse';
 
     has ua => (
@@ -41,8 +42,9 @@ use warnings;
     );
 
     has request => (
-        is => 'ro',
+        is => 'rw',
         required => 1,
+        trigger => sub { shift->clear_response }
     );
 
     has on_error => (
@@ -66,10 +68,29 @@ use warnings;
 
     sub decode { warn 'decode is deprecated, please call decoded_content instead'; shift->decoded_content }
 
+    has on_redirect =>  (
+        is => 'rw',
+        chained => 1,
+    );
+
+    sub follow_redirects {
+        my $self    = shift;
+        my $handler = sub {
+            my ( $s, $r ) = @_;
+            my $new_url     = $r->header('Location');
+            my $request     = $s->request;
+            my $headers = $request->headers;
+            HTTP::Request->new( $request->method, $new_url, $headers,
+                $request->content );
+        };
+        $self->on_redirect($handler);
+    }
+
     has response => (
         is      => 'ro',
         lazy    => 1,
         builder => '_build_response',
+        clearer => 'clear_response',
         handles => { 'content' => 'decoded_content' },
     );
 
@@ -77,12 +98,16 @@ use warnings;
         my $self    = shift;
         my $ua      = $self->ua;
         my $request = $self->request;
-
-        return $ua->request($request) unless TRACE;
-
-        warn $request->dump;
+        warn $request->dump if TRACE;
         my $response = $ua->request($request);
-        warn $response->dump;
+        my $depth = 0;
+        while ($response->is_redirect && $self->has_redirect_handler) {
+           my $handler = $self->on_redirect;
+           my $request = $self->$handler($response);
+           $response = $ua->request($request);
+           last if $depth++ > MAX_REDIRECTS;
+        }
+        warn $response->dump if TRACE;
         return $response;
     }
 
