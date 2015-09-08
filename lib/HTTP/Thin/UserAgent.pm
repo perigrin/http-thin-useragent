@@ -51,6 +51,9 @@ use warnings;
     has decoder => (
         is => 'rw',
         chained => 1,
+        default => sub {
+            sub { shift->decoded_content }
+        },
     );
 
     sub decoded_content {
