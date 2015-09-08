@@ -23,11 +23,14 @@ use warnings;
     use Moo;
     use MooX::late;
     use MooX::ChainedAttributes;
+
+    use Carp qw(confess);
+    use HTML::Selector::XPath;
+    use HTML::TreeBuilder::XPath;
     use HTTP::Thin;
     use JSON::Any;
-    use Try::Tiny;
     use Scalar::Util qw/weaken/;
-    use Carp qw(confess);
+    use Try::Tiny;
 
     use constant TRACE => $ENV{TRACE} // 0;
     use constant UnexpectedResponse => 'HTTP::Thin::UserAgent::Error::UnexpectedResponse';
@@ -156,10 +159,10 @@ use warnings;
     sub find {
         my ( $self, $exp ) = @_;
 
-        my $xpath =
-            $exp =~ m!^(?:/|id\()!
-          ? $exp
-          : HTML::Selector::XPath::selector_to_xpath($exp);
+        my $xpath
+            = $exp =~ m!^(?:/|id\()!
+            ? $exp
+            : HTML::Selector::XPath::selector_to_xpath($exp);
 
         my @nodes = try { $self->tree->findnodes($xpath) }
         catch {

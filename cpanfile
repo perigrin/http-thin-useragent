@@ -3,6 +3,8 @@ requires 'Exporter';
 requires 'ExtUtils::MakeMaker';
 requires 'File::Find';
 requires 'File::Temp';
+requires 'HTML::Selector::XPath';
+requires 'HTML::Treebuilder::XPath';
 requires 'HTTP::Request::Common';
 requires 'HTTP::Thin';
 requires 'Import::Into';
