@@ -103,29 +103,23 @@ use warnings;
         my $res = $ua->request($request);
         warn $res->dump if TRACE;
 
-        return $res if $res->is_success;
+        if ($res->is_error) {
 
-        # we got an error ... let's figure it out
-
-        my $e;
-        if ($res->is_server_error) {
-            $e = HTTPException->new_exception({
+            my $e = HTTPException->new_exception({
                 status_code => $res->code,
                 reason => $res->message,
                 additional_headers => {
                     $res->headers->flatten,
-                }
-            });
-        }
-        if ($res->is_client_error) {
-           $e =  UnexpectedResponse->new(
-                message => $res->message,
+                },
                 response => $res,
-           );
-        }
-        for ($e) {
+            });
+
+            for ($e) {
                 $self->on_error->($e);
+            }
         }
+
+        return $res;
     }
 
     sub as_json {
