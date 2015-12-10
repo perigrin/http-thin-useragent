@@ -108,9 +108,9 @@ use warnings;
             my $e = HTTPException->new_exception({
                 status_code => $res->code,
                 reason => $res->message,
-                additional_headers => {
-                    $res->headers->flatten,
-                },
+                additional_headers => [
+                     $res->headers->flatten(),
+                ],
                 response => $res,
             });
 
