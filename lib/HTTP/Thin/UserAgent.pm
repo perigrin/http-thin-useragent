@@ -5,14 +5,37 @@ use warnings;
 
 # ABSTRACT: A Thin UserAgent around some useful modules.
 
+
+{
+    package
+        HTTP::Thin::UserAgent::HTTPExceptionWithResponse;
+    use Moo::Role;
+    has response => ( is => 'ro' );
+}
+
 {
     package
         HTTP::Thin::UserAgent::Error::UnexpectedResponse;
 
     use Moo;
     extends qw(Throwable::Error);
+    with qw(HTTP::Thin::UserAgent::HTTPExceptionWithResponse);
 
-    has response => ( is => 'ro' );
+}
+
+{
+    package
+        HTTP::Thin::UserAgent::HTTP::Throwable::Factory;
+        use Moo;
+
+        extends qw(HTTP::Throwable::Factory);
+
+        sub extra_roles {
+            return qw(
+                HTTP::Throwable::Role::TextBody
+                HTTP::Thin::UserAgent::HTTPExceptionWithResponse
+            );
+        }
 }
 
 {
@@ -31,6 +54,7 @@ use warnings;
 
     use constant TRACE => $ENV{TRACE} // 0;
     use constant UnexpectedResponse => 'HTTP::Thin::UserAgent::Error::UnexpectedResponse';
+    use constant HTTPException => 'HTTP::Thin::UserAgent::HTTP::Throwable::Factory';
 
     has ua => (
         is      => 'ro',
@@ -75,12 +99,27 @@ use warnings;
         my $ua      = $self->ua;
         my $request = $self->request;
 
-        return $ua->request($request) unless TRACE;
+        warn $request->dump if TRACE;
+        my $res = $ua->request($request);
+        warn $res->dump if TRACE;
 
-        warn $request->dump;
-        my $response = $ua->request($request);
-        warn $response->dump;
-        return $response;
+        if ($res->is_error) {
+
+            my $e = HTTPException->new_exception({
+                status_code => $res->code,
+                reason => $res->message,
+                additional_headers => [
+                     $res->headers->flatten(),
+                ],
+                response => $res,
+            });
+
+            for ($e) {
+                $self->on_error->($e);
+            }
+        }
+
+        return $res;
     }
 
     sub as_json {
@@ -206,9 +245,7 @@ __END__
 
 =head1 DESCRIPTION
 
-WARNING this code is still *alpha* quality. While it will work as advertised on the tin, API breakage may occure as things settle.
-
-C<HTTP::Thin::UserAgent> provides what I hope is a thin layer over L<HTTP::Thin>. It exposes an functional API that hopefully makes writing HTTP clients easier. Right now it's in *very* alpha stage and really only helps for writing JSON clients. The intent is to expand it to be more generally useful but a JSON client was what I needed first.
+C<HTTP::Thin::UserAgent> provides a layer over L<HTTP::Thin>. It exposes an functional API that hopefully makes writing HTTP clients easier.
 
 =head1 EXPORTS
 
@@ -260,7 +297,8 @@ Takes a CSS or XPath expression and returns an arrayref of L<HTML::Treebuilder::
 
 =item on_error( $coderef )
 
-A code reference that if there is an error in fetching the HTTP response handles that error. C<$_> will be set to the error being handled.
+A code reference that if there is an error in fetching the HTTP response handles that error. C<$_> will be set to the error being handled. Exceptions are
+L<HTTP::Throwable> objects for server side errors.
 
 =back
 
