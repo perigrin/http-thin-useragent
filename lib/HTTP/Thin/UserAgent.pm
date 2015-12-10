@@ -245,9 +245,7 @@ __END__
 
 =head1 DESCRIPTION
 
-WARNING this code is still *alpha* quality. While it will work as advertised on the tin, API breakage may occure as things settle.
-
-C<HTTP::Thin::UserAgent> provides what I hope is a thin layer over L<HTTP::Thin>. It exposes an functional API that hopefully makes writing HTTP clients easier. Right now it's in *very* alpha stage and really only helps for writing JSON clients. The intent is to expand it to be more generally useful but a JSON client was what I needed first.
+C<HTTP::Thin::UserAgent> provides a layer over L<HTTP::Thin>. It exposes an functional API that hopefully makes writing HTTP clients easier.
 
 =head1 EXPORTS
 
@@ -299,7 +297,8 @@ Takes a CSS or XPath expression and returns an arrayref of L<HTML::Treebuilder::
 
 =item on_error( $coderef )
 
-A code reference that if there is an error in fetching the HTTP response handles that error. C<$_> will be set to the error being handled.
+A code reference that if there is an error in fetching the HTTP response handles that error. C<$_> will be set to the error being handled. Exceptions are
+L<HTTP::Throwable> objects for server side errors.
 
 =back
 
