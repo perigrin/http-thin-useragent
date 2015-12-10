@@ -5,14 +5,37 @@ use warnings;
 
 # ABSTRACT: A Thin UserAgent around some useful modules.
 
+
+{
+    package
+        HTTP::Thin::UserAgent::HTTPExceptionWithResponse;
+    use Moo::Role;
+    has response => ( is => 'ro' );
+}
+
 {
     package
         HTTP::Thin::UserAgent::Error::UnexpectedResponse;
 
     use Moo;
     extends qw(Throwable::Error);
+    with qw(HTTP::Thin::UserAgent::HTTPExceptionWithResponse);
 
-    has response => ( is => 'ro' );
+}
+
+{
+    package
+        HTTP::Thin::UserAgent::HTTP::Throwable::Factory;
+        use Moo;
+
+        extends qw(HTTP::Throwable::Factory);
+
+        sub extra_roles {
+            return qw(
+                HTTP::Throwable::Role::TextBody
+                HTTP::Thin::UserAgent::HTTPExceptionWithResponse
+            );
+        }
 }
 
 {
@@ -31,6 +54,7 @@ use warnings;
 
     use constant TRACE => $ENV{TRACE} // 0;
     use constant UnexpectedResponse => 'HTTP::Thin::UserAgent::Error::UnexpectedResponse';
+    use constant HTTPException => 'HTTP::Thin::UserAgent::HTTP::Throwable::Factory';
 
     has ua => (
         is      => 'ro',
@@ -75,12 +99,33 @@ use warnings;
         my $ua      = $self->ua;
         my $request = $self->request;
 
-        return $ua->request($request) unless TRACE;
+        warn $request->dump if TRACE;
+        my $res = $ua->request($request);
+        warn $res->dump if TRACE;
 
-        warn $request->dump;
-        my $response = $ua->request($request);
-        warn $response->dump;
-        return $response;
+        return $res if $res->is_success;
+
+        # we got an error ... let's figure it out
+
+        my $e;
+        if ($res->is_server_error) {
+            $e = HTTPException->new_exception({
+                status_code => $res->code,
+                reason => $res->message,
+                additional_headers => {
+                    $res->headers->flatten,
+                }
+            });
+        }
+        if ($res->is_client_error) {
+           $e =  UnexpectedResponse->new(
+                message => $res->message,
+                response => $res,
+           );
+        }
+        for ($e) {
+                $self->on_error->($e);
+        }
     }
 
     sub as_json {
