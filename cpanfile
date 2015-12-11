@@ -5,6 +5,7 @@ requires 'File::Find';
 requires 'File::Temp';
 requires 'HTTP::Request::Common';
 requires 'HTTP::Thin';
+requires 'HTTP::Headers' => 6.07;
 requires 'HTTP::Throwable::Factory';
 requires 'Import::Into';
 requires 'JSON::Any';
