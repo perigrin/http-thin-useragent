@@ -289,11 +289,11 @@ Returns the decoded content, currently we only support HTML (in which case we re
 
 =item tree( )
 
-Returns a L<HTML::Treebuilder::XPath> object.
+Returns a L<HTML::TreeBuilder::XPath> object.
 
 =item find( $exp )
 
-Takes a CSS or XPath expression and returns an arrayref of L<HTML::Treebuilder::XPath> nodes.
+Takes a CSS or XPath expression and returns an arrayref of L<HTML::TreeBuilder::XPath> nodes.
 
 =item on_error( $coderef )
 
