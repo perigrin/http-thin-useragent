@@ -36,6 +36,49 @@ use warnings;
                 HTTP::Thin::UserAgent::HTTPExceptionWithResponse
             );
         }
+
+        # A PR for this has been sent to HTTP::Throwable when that ships we can bump the dep
+        # and remove this method
+        sub ident_for_status_code {
+            my ($self, $code) = @_;
+
+            my %lookup = (
+                300 => 'MultipleChoices',
+                301 => 'MovedPermanently',
+                302 => 'Found',
+                303 => 'SeeOther',
+                304 => 'NotModified',
+                305 => 'UseProxy',
+                307 => 'TemporaryRedirect',
+
+                400 => 'BadRequest',
+                401 => 'Unauthorized',
+                403 => 'Forbidden',
+                404 => 'NotFound',
+                405 => 'MethodNotAllowed',
+                406 => 'NotAcceptable',
+                407 => 'ProxyAuthenticationRequired',
+                408 => 'RequestTimeout',
+                409 => 'Conflict',
+                410 => 'Gone',
+                411 => 'LengthRequired',
+                412 => 'PreconditionFailed',
+                413 => 'RequestEntityTooLarge',
+                414 => 'RequestURITooLong',
+                415 => 'UnsupportedMediaType',
+                416 => 'RequestedRangeNotSatisfiable',
+                417 => 'ExpectationFailed',
+
+                500 => 'InternalServerError',
+                501 => 'NotImplemented',
+                502 => 'BadGateway',
+                503 => 'Status::ServiceUnavailable',
+                504 => 'GatewayTimeout',
+                505 => 'HTTPVersionNotSupported',
+            );
+
+            return $lookup{$code};
+        }
 }
 
 {
@@ -103,20 +146,28 @@ use warnings;
         my $res = $ua->request($request);
         warn $res->dump if TRACE;
 
-        if ($res->is_error) {
-
-            my $e = HTTPException->new_exception({
-                status_code => $res->code,
-                reason => $res->message,
-                additional_headers => [
-                     $res->headers->flatten(),
-                ],
-                response => $res,
-            });
-
-            for ($e) {
-                $self->on_error->($e);
+        if ( $res->is_error ) {
+            my $e;
+            if ( my $id = HTTPException->ident_for_status_code( $res->code ) ) {
+                $e = HTTPException->new_exception(
+                    $id => {
+                        additional_headers => [ $res->headers->flatten() ],
+                        response           => $res,
+                    }
+                );
             }
+            else {
+                $e = HTTPException->new_exception(
+                    {
+                        status_code        => $res->code,
+                        reason             => $res->message,
+                        additional_headers => [ $res->headers->flatten(), ],
+                        response           => $res,
+                    }
+                );
+            }
+
+            for ($e) { $self->on_error->($e) }
         }
 
         return $res;

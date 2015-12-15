@@ -13,6 +13,7 @@ use Test::Requires::Env qw(
         ok ref $_, 'got an exception object';
         is $_->status_code, '404', 'got a 404';
         is ref $_->response, 'HTTP::Response', 'got a response object too';
+        ok $_->DOES('HTTP::Throwable::Role::Status::NotFound'), 'DOES NotFound properly';
     })->response;
 }
 
