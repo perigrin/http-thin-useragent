@@ -68,7 +68,7 @@ use warnings;
 
     has on_error => (
         is      => 'rw',
-        default => sub { sub { confess $_->message } },
+        default => sub { sub { confess "$_" } },
         chained => 1,
     );
 

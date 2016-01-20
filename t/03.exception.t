@@ -10,6 +10,7 @@ use Test::Requires::Env qw(
 {
     my $uri  = 'http://perigr.in/will-never-exist-'.time;
     my $resp = http( GET $uri )->on_error(sub {
+        note "$_";
         ok ref $_, 'got an exception object';
         is $_->status_code, '404', 'got a 404';
         is ref $_->response, 'HTTP::Response', 'got a response object too';
